@@ -11,18 +11,27 @@ export class Boid {
             (Math.random() * 2) - 1,
             (Math.random() * 2) - 1
         );
-        this.velocity.setMag((Math.random() * 6) + 2);
+        this.velocity.setMag((Math.random() * 4) + 2);
         this.acceleration = new Vector2();
 
         this.color = getRandRgb();
         this.size = 3.0;
+
+        this.maxSpeed = 2.0;
+        this.maxSteeringForce = .3;
+        this.perceptionR = 30; // perception radius
+        // this.perceptionA = Math.PI / 2 // perception angle:w
     }
 
-    update() {
+    update(boids) {
+        this.align(boids);
+
         this.position.add(this.velocity);
         this.velocity.add(this.acceleration);
+        this.velocity.limit(this.maxSpeed);
 
         this.wrap();
+        this.acceleration.mult(0);
     }
 
     draw(ctx) {
@@ -64,6 +73,25 @@ export class Boid {
 
         if (this.position.y > window.canvas.height + this.size) {
             this.position.y = -this.size;
+        }
+    }
+
+    align(boids) {
+        let boidCount = 0;
+
+        boids.map(other => {
+            if (other == this ||
+                Vector2.dist(this.position, other.position) > this.perceptionR)
+                return;
+
+            this.acceleration.add(other.velocity);
+            boidCount++;
+        });
+
+        if (boidCount > 0) {
+            this.acceleration.div(boidCount); // get avg
+            this.acceleration.sub(this.velocity); // dis idk why think bout it!
+            this.acceleration.limit(this.maxSteeringForce);
         }
     }
 }

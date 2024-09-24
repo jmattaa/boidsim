@@ -8,8 +8,38 @@ export class Vector2 {
         this.y = y;
     }
 
-    static createVector(...args) {
-        return new Vector2(...args);
+    static dist(v1, v2) {
+        return Math.sqrt(((v2.x - v1.x) ** 2) + ((v2.y - v1.y) ** 2));
+    }
+
+    draw(ctx, pos, color = 'red') {
+        ctx.save();
+
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 3;
+        ctx.fillStyle = color;
+
+        ctx.translate(pos.x, pos.y);
+
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.lineTo(this.x, this.y);
+        ctx.stroke();
+
+        const angle = this.heading();
+        ctx.rotate(angle);
+
+        let arrowSize = 7;
+        ctx.translate(this.getMag() - arrowSize, 0);
+
+        ctx.beginPath();
+        ctx.moveTo(0, arrowSize / 2);
+        ctx.lineTo(0, -arrowSize / 2);
+        ctx.lineTo(arrowSize, 0);
+        ctx.closePath();
+        ctx.fill();
+
+        ctx.restore();
     }
 
     toString() {
@@ -111,7 +141,7 @@ export class Vector2 {
     getMag() {
         // ||v|| = sqrt{vx^2 + vy^2}
         // basically pythagoras
-        
+
         let x = this.x;
         let y = this.y;
         return Math.sqrt(x * x + y * y);
@@ -132,8 +162,8 @@ export class Vector2 {
     }
 
     limit(n) {
-        this.x > n? this.x = n : null;
-        this.y > n? this.y = n : null;
+        this.x > n ? this.x = n : null;
+        this.y > n ? this.y = n : null;
 
         return this;
     }

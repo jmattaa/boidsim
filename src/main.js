@@ -30,7 +30,7 @@ const draw = () => {
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
     boids.map(boid => {
-        boid.update();
+        boid.update(boids);
         boid.draw(ctx);
     })
 };
