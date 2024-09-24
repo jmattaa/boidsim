@@ -12,13 +12,15 @@ export class Boid {
             (Math.random() * 2) - 1
         );
         this.velocity.setMag((Math.random() * 6) + 2);
+        this.acceleration = new Vector2();
 
         this.color = getRandRgb();
-        this.size = 2.5;
+        this.size = 3.0;
     }
 
     update() {
         this.position.add(this.velocity);
+        this.velocity.add(this.acceleration);
 
         this.wrap();
     }

@@ -11,16 +11,11 @@ window.onresize = () => {
     resize(canvas);
 };
 
-window.onmousedown = (e) => {
-    boids.push(new Boid(e.clientX, e.clientY));
-}
-
 const start = () => {
     resize(canvas);
-
-    for (let i = 0; i < 10; i++) {
-        boids.push(new Boid());
-    }
+for (let i = 0; i < 100; i++) {
+    boids.push(new Boid());
+}
 };
 
 const draw = () => {
