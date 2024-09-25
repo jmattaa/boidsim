@@ -18,7 +18,7 @@ window.onmousedown = (e) => {
 const start = () => {
     resize(canvas);
 
-    for (let i = 0; i < 10; i++) {
+    for (let i = 0; i < 20; i++) {
         boids.push(new Boid());
     }
 };

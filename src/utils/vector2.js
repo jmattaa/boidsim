@@ -161,9 +161,13 @@ export class Vector2 {
         return this.div(mag);
     }
 
+    // man u were a dumbass and limited the x and y not the mag
     limit(n) {
-        this.x > n ? this.x = n : null;
-        this.y > n ? this.y = n : null;
+        let mag = this.getMag();
+
+        if (mag > n) {
+            this.setMag(n);
+        }
 
         return this;
     }

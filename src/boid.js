@@ -17,14 +17,15 @@ export class Boid {
         this.color = getRandRgb();
         this.size = 3.0;
 
-        this.maxSpeed = 2.0;
-        this.maxSteeringForce = .3;
-        this.perceptionR = 30; // perception radius
-        // this.perceptionA = Math.PI / 2 // perception angle:w
+        this.maxSpeed = 4.0;
+        this.maxSteerForce = 10 * 0.07; // the name's bond, james bond
+        this.perceptionR = 30;
+        // this.perceptionA = Math.PI / 2 
     }
 
     update(boids) {
         this.align(boids);
+        this.separate(boids);
 
         this.position.add(this.velocity);
         this.velocity.add(this.acceleration);
@@ -78,20 +79,49 @@ export class Boid {
 
     align(boids) {
         let boidCount = 0;
+        let sum = new Vector2();
 
         boids.map(other => {
-            if (other == this ||
+            if (other === this ||
                 Vector2.dist(this.position, other.position) > this.perceptionR)
                 return;
 
-            this.acceleration.add(other.velocity);
+            sum.add(other.velocity);
             boidCount++;
         });
 
         if (boidCount > 0) {
-            this.acceleration.div(boidCount); // get avg
-            this.acceleration.sub(this.velocity); // dis idk why think bout it!
-            this.acceleration.limit(this.maxSteeringForce);
+            sum.div(boidCount);
+            sum.sub(this.velocity); // dis idk why think bout it!
+            sum.limit(this.maxSteerForce);
         }
+
+        this.acceleration.add(sum);
+    }
+
+    separate(boids) {
+        let boidCount = 0;
+        let sum = new Vector2();
+
+        boids.map(other => {
+            let d = Vector2.dist(this.position, other.position);
+            if (other === this ||
+                d > this.perceptionR)
+                return;
+
+            let diff = new Vector2(this.position.x, this.position.y);
+            diff.sub(other.position);
+            diff.setMag(1 / d); // if d is small mag shall be big
+
+            sum.add(diff);
+            boidCount++;
+        });
+
+        if (boidCount > 0) {
+            sum.div(boidCount);
+            sum.limit(this.maxSteerForce);
+        }
+
+        this.acceleration.add(sum);
     }
 }
