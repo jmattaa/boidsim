@@ -24,8 +24,9 @@ export class Boid {
     }
 
     update(boids) {
-        this.align(boids);
         this.separate(boids);
+        this.align(boids);
+        this.cohesion(boids);
 
         this.position.add(this.velocity);
         this.velocity.add(this.acceleration);
@@ -77,33 +78,13 @@ export class Boid {
         }
     }
 
-    align(boids) {
-        let boidCount = 0;
-        let sum = new Vector2();
-
-        boids.map(other => {
-            if (other === this ||
-                Vector2.dist(this.position, other.position) > this.perceptionR)
-                return;
-
-            sum.add(other.velocity);
-            boidCount++;
-        });
-
-        if (boidCount > 0) {
-            sum.div(boidCount);
-            sum.sub(this.velocity); // dis idk why think bout it!
-            sum.limit(this.maxSteerForce);
-        }
-
-        this.acceleration.add(sum);
-    }
-
     separate(boids) {
         let boidCount = 0;
         let sum = new Vector2();
 
-        boids.map(other => {
+        const dist = 3;
+
+        boids.forEach(other => {
             let d = Vector2.dist(this.position, other.position);
             if (other === this ||
                 d > this.perceptionR)
@@ -112,16 +93,66 @@ export class Boid {
             let diff = new Vector2(this.position.x, this.position.y);
             diff.sub(other.position);
             diff.setMag(1 / d); // if d is small mag shall be big
+            diff.mult(dist);
 
             sum.add(diff);
             boidCount++;
         });
 
-        if (boidCount > 0) {
-            sum.div(boidCount);
-            sum.limit(this.maxSteerForce);
-        }
+        if (boidCount == 0) return;
+
+        sum.div(boidCount);
+        sum.limit(this.maxSteerForce);
 
         this.acceleration.add(sum);
+    }
+
+    align(boids) {
+        let boidCount = 0;
+        let avgVelocity = new Vector2();
+
+        boids.forEach(other => {
+            if (other === this ||
+                Vector2.dist(this.position, other.position) > this.perceptionR)
+                return;
+
+            avgVelocity.add(other.velocity);
+            boidCount++;
+        });
+
+        if (boidCount == 0) return;
+
+        avgVelocity.div(boidCount);
+        avgVelocity.sub(this.velocity); // dis idk why think bout it!
+        avgVelocity.limit(this.maxSteerForce);
+
+
+        this.acceleration.add(avgVelocity);
+    }
+
+    // what's the verb for this????
+    cohesion(boids) {
+        let boidCount = 0;
+        let avgPosition = new Vector2();
+
+        boids.forEach(other => {
+            if (other === this ||
+                Vector2.dist(this.position, other.position) > this.perceptionR)
+                return;
+
+            avgPosition.add(other.position);
+            boidCount++;
+        });
+        
+        if (boidCount == 0) return;
+        
+        avgPosition.div(boidCount);
+
+        let steering = avgPosition.sub(this.position);
+        steering.setMag(this.maxSpeed);
+        steering.sub(this.velocity);
+
+        steering.limit(this.maxSteerForce);
+        this.acceleration.add(steering);
     }
 }
