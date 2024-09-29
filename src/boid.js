@@ -2,6 +2,11 @@ import { getRandRgb } from "./utils/utils.js";
 import { Vector2 } from "./utils/vector2.js";
 
 export class Boid {
+
+    #separateForce = 1.5;
+    #alignForce = 1.1;
+    #cohesionForce = 1;
+
     constructor(
         x = Math.random() * window.canvas.width,
         y = Math.random() * window.canvas.height
@@ -18,19 +23,23 @@ export class Boid {
         this.size = 3.0;
 
         this.maxSpeed = 4.0;
-        this.maxSteerForce = 10 * 0.07; // the name's bond, james bond
+        this.maxSteerForce = 2 * 0.07; // the name's bond, james bond
         this.perceptionR = 30;
-        // this.perceptionA = Math.PI / 2 
+        //this.perceptionA = Math.PI / 2
     }
 
     update(boids) {
-        this.separate(boids);
-        this.align(boids);
-        this.cohesion(boids);
+        let separateForce = this.separate(boids).mult(this.#separateForce);
+        let alignForce = this.align(boids).mult(this.#alignForce);
+        let cohesionForce = this.cohesion(boids).mult(this.#cohesionForce);
 
-        this.position.add(this.velocity);
+        this.acceleration.add(separateForce);
+        this.acceleration.add(alignForce);
+        this.acceleration.add(cohesionForce);
+
         this.velocity.add(this.acceleration);
         this.velocity.limit(this.maxSpeed);
+        this.position.add(this.velocity);
 
         this.wrap();
         this.acceleration.mult(0);
@@ -57,6 +66,11 @@ export class Boid {
         ctx.fill();
         ctx.stroke();
 
+        // cuz sometimes me wanna see
+        //ctx.fillStyle = "rgba(1, 1, 1, .3)"
+        //ctx.arc(0, 0, this.perceptionR, 0, Math.PI * 2);
+        //ctx.fill()
+
         ctx.restore();
     }
 
@@ -78,18 +92,20 @@ export class Boid {
         }
     }
 
+    isInPerception(other) {
+        return Vector2.dist(this.position, other.position) <= this.perceptionR;
+    }
+
     separate(boids) {
         let boidCount = 0;
         let sum = new Vector2();
 
-        const dist = 3;
+        const dist = this.size * 4;
 
         boids.forEach(other => {
-            let d = Vector2.dist(this.position, other.position);
-            if (other === this ||
-                d > this.perceptionR)
-                return;
+            if (other === this || !this.isInPerception(other)) return;
 
+            let d = Vector2.dist(this.position, other.position);
             let diff = new Vector2(this.position.x, this.position.y);
             diff.sub(other.position);
             diff.setMag(1 / d); // if d is small mag shall be big
@@ -99,12 +115,12 @@ export class Boid {
             boidCount++;
         });
 
-        if (boidCount == 0) return;
+        if (boidCount == 0) return sum;
 
         sum.div(boidCount);
         sum.limit(this.maxSteerForce);
 
-        this.acceleration.add(sum);
+        return sum;
     }
 
     align(boids) {
@@ -112,47 +128,42 @@ export class Boid {
         let avgVelocity = new Vector2();
 
         boids.forEach(other => {
-            if (other === this ||
-                Vector2.dist(this.position, other.position) > this.perceptionR)
-                return;
+            if (other === this || !this.isInPerception(other)) return;
 
             avgVelocity.add(other.velocity);
             boidCount++;
         });
 
-        if (boidCount == 0) return;
+        if (boidCount == 0) return avgVelocity;
 
         avgVelocity.div(boidCount);
         avgVelocity.sub(this.velocity); // dis idk why think bout it!
         avgVelocity.limit(this.maxSteerForce);
 
-
-        this.acceleration.add(avgVelocity);
+        return avgVelocity;
     }
 
-    // what's the verb for this????
     cohesion(boids) {
         let boidCount = 0;
         let avgPosition = new Vector2();
 
         boids.forEach(other => {
-            if (other === this ||
-                Vector2.dist(this.position, other.position) > this.perceptionR)
-                return;
+            if (other === this || !this.isInPerception(other)) return;
 
             avgPosition.add(other.position);
             boidCount++;
         });
-        
-        if (boidCount == 0) return;
-        
+
+        if (boidCount == 0) return avgPosition;
+
         avgPosition.div(boidCount);
 
-        let steering = avgPosition.sub(this.position);
+        let steering =
+            new Vector2(avgPosition.x, avgPosition.y).sub(this.position);
         steering.setMag(this.maxSpeed);
         steering.sub(this.velocity);
-
         steering.limit(this.maxSteerForce);
-        this.acceleration.add(steering);
+
+        return steering;
     }
 }

@@ -18,7 +18,7 @@ window.onmousedown = (e) => {
 const start = () => {
     resize(canvas);
 
-    for (let i = 0; i < 200; i++) {
+    for (let i = 0; i < 250; i++) {
         boids.push(new Boid());
     }
 };
@@ -30,7 +30,7 @@ const draw = () => {
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
     boids.map(boid => {
-        boid.update(boids);
+        boid.update(boids, ctx);
         boid.draw(ctx);
     })
 };

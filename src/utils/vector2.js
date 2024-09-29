@@ -135,7 +135,8 @@ export class Vector2 {
     }
 
     setMag(x) {
-        return this.normalize().mult(x);
+        this.normalize().mult(x);
+        return this;
     }
 
     getMag() {
