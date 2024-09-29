@@ -1,11 +1,17 @@
 import { getRandRgb } from "./utils/utils.js";
 import { Vector2 } from "./utils/vector2.js";
 
-export class Boid {
+const SEPARATE_FORCE = 1.5;
+const ALIGN_FORCE = 1.1;
+const COHESION_FORCE = 1;
 
-    #separateForce = 1.5;
-    #alignForce = 1.1;
-    #cohesionForce = 1;
+const MAX_SPEED = 4.0;
+const MAX_STEER_FORCE = 2 * 0.07; // the name's bond, james bond
+const PERCEPTION_RADIUS = 30;
+// const PERCEPTION_ANGLE = Math.PI / 2;
+const BOID_SIZE = 3.0;
+
+export class Boid {
 
     constructor(
         x = Math.random() * window.canvas.width,
@@ -20,25 +26,19 @@ export class Boid {
         this.acceleration = new Vector2();
 
         this.color = getRandRgb();
-        this.size = 3.0;
-
-        this.maxSpeed = 4.0;
-        this.maxSteerForce = 2 * 0.07; // the name's bond, james bond
-        this.perceptionR = 30;
-        //this.perceptionA = Math.PI / 2
     }
 
     update(boids) {
-        let separateForce = this.separate(boids).mult(this.#separateForce);
-        let alignForce = this.align(boids).mult(this.#alignForce);
-        let cohesionForce = this.cohesion(boids).mult(this.#cohesionForce);
+        let separateForce = this.separate(boids).mult(SEPARATE_FORCE);
+        let alignForce = this.align(boids).mult(ALIGN_FORCE);
+        let cohesionForce = this.cohesion(boids).mult(COHESION_FORCE);
 
         this.acceleration.add(separateForce);
         this.acceleration.add(alignForce);
         this.acceleration.add(cohesionForce);
 
         this.velocity.add(this.acceleration);
-        this.velocity.limit(this.maxSpeed);
+        this.velocity.limit(MAX_SPEED);
         this.position.add(this.velocity);
 
         this.wrap();
@@ -58,9 +58,9 @@ export class Boid {
         ctx.strokeStyle = "#ddd";
 
         ctx.beginPath();
-        ctx.moveTo(0, -this.size * 2);
-        ctx.lineTo(-this.size, this.size * 2);
-        ctx.lineTo(this.size, this.size * 2);
+        ctx.moveTo(0, -BOID_SIZE * 2);
+        ctx.lineTo(-BOID_SIZE, BOID_SIZE * 2);
+        ctx.lineTo(BOID_SIZE, BOID_SIZE * 2);
         ctx.closePath();
 
         ctx.fill();
@@ -68,39 +68,39 @@ export class Boid {
 
         // cuz sometimes me wanna see
         //ctx.fillStyle = "rgba(1, 1, 1, .3)"
-        //ctx.arc(0, 0, this.perceptionR, 0, Math.PI * 2);
+        //ctx.arc(0, 0, PERCEPTION_RADIUS, 0, Math.PI * 2);
         //ctx.fill()
 
         ctx.restore();
     }
 
     wrap() {
-        if (this.position.x < -this.size) {
-            this.position.x = window.canvas.width + this.size;
+        if (this.position.x < -BOID_SIZE) {
+            this.position.x = window.canvas.width + BOID_SIZE;
         }
 
-        if (this.position.y < -this.size) {
-            this.position.y = window.canvas.height + this.size;
+        if (this.position.y < -BOID_SIZE) {
+            this.position.y = window.canvas.height + BOID_SIZE;
         }
 
-        if (this.position.x > window.canvas.width + this.size) {
-            this.position.x = -this.size;
+        if (this.position.x > window.canvas.width + BOID_SIZE) {
+            this.position.x = -BOID_SIZE;
         }
 
-        if (this.position.y > window.canvas.height + this.size) {
-            this.position.y = -this.size;
+        if (this.position.y > window.canvas.height + BOID_SIZE) {
+            this.position.y = -BOID_SIZE;
         }
     }
 
     isInPerception(other) {
-        return Vector2.dist(this.position, other.position) <= this.perceptionR;
+        return Vector2.dist(this.position, other.position) <= PERCEPTION_RADIUS;
     }
 
     separate(boids) {
         let boidCount = 0;
         let sum = new Vector2();
 
-        const dist = this.size * 4;
+        const dist = BOID_SIZE * 4;
 
         boids.forEach(other => {
             if (other === this || !this.isInPerception(other)) return;
@@ -118,7 +118,7 @@ export class Boid {
         if (boidCount == 0) return sum;
 
         sum.div(boidCount);
-        sum.limit(this.maxSteerForce);
+        sum.limit(MAX_STEER_FORCE);
 
         return sum;
     }
@@ -138,7 +138,7 @@ export class Boid {
 
         avgVelocity.div(boidCount);
         avgVelocity.sub(this.velocity); // dis idk why think bout it!
-        avgVelocity.limit(this.maxSteerForce);
+        avgVelocity.limit(MAX_STEER_FORCE);
 
         return avgVelocity;
     }
@@ -160,9 +160,9 @@ export class Boid {
 
         let steering =
             new Vector2(avgPosition.x, avgPosition.y).sub(this.position);
-        steering.setMag(this.maxSpeed);
+        steering.setMag(MAX_SPEED);
         steering.sub(this.velocity);
-        steering.limit(this.maxSteerForce);
+        steering.limit(MAX_STEER_FORCE);
 
         return steering;
     }
